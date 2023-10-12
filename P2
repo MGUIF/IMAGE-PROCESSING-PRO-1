@@ -1,0 +1,67 @@
+Cloud registration on Altair Control 
+
+1.	Create IAM Role 
+For IAM Roles we must configure the policy and roles and then attached it to the EC2 instance which runs Altair Control on cloud, which require the following details 
+•	AMI ID 
+•	Security Group ID 
+•	Subnet ID 
+•	IAM Role Name 
+2.	Configure Policies 
+•	Log In to AWS Console. 
+•	Under IAM click on Policies 
+•	Create new policy via JSON tab 
+•	Remove the current “Statement”: [] section and replace with the following statement 
+
+
+3.	Configure Roles 
+-	Log In to AWS Console. 
+-	Under IAM click on Roles 
+-	Under Trusted entity type select AWS service 
+-	Under Common user case select EC2 radio button 
+-	Click Next and add permission to roles 
+-	Under Permissions Policies search for the name of the policy that we created under Configure Policies section, search for Altair-Control-Cloud 
+-	Click on checkbox and click on review 
+-	Give logical role name example Altair-Control-Cloud 
+-	Add tag [Key = Name] [value=Altair-Control], this is optional step 
+-	Role is created with the policy (Altair-Control-Cloud) attached 
+4.	Attach Roles 
+-	Log in to AWS Console 
+-	In the navigation pane, choose Instances. 
+-	Select the instance, choose Actions, Security, Modify IAM role. 
+-	Select the IAM role to attach to your instance, and choose Save. 
+
+5.	Inbound Rules 
+-	Allow port 22 (optional) in case terminal access required 
+-	Enable port 9500 
+-	Enable port for NFS and NIS service 
+-	ICMP IPV4 port for any type of initial trouble shooting. 
+6.	Create AMI 
+-	Create the AMI with PBS Pro configured 
+-	We need AMI ID, Security Group ID and Subnet ID for successful registering the imag on Altair Control 
+-	Based on Bursting scenario on Altair Control it will choose the proper AMI once request made by PBS Pro 
+7.	Open Ports 
+The following ports need to be opened for communication with external locations and should be open on your firewall to allow for this communication: 
+-	9343 - Data Collector 
+-	9500 - Control Gateway 
+-	9980 - Cloud UI 
+-	9850-FrameworkHTTPOrchestratorservice 
+
+8.	API key requirement: 
+-	Account Name 
+-	Access key ID 
+-	Secret Access Key 
+-	AMI key 
+-	Policy 
+-	subnet 
+
+Configuration on Altair Control 
+
+1.	Login to the portal https://<machinneName>:9500 
+2.	Click on cloud tab and register the AWS Cloud vendor 
+3.	Change the default “API Key” option to “AMI Role” in the dropdown at the top of the form. Use the Role “friendly name” and not the ARN for this step. Example Altair-Control-Cloud 
+4.	Once it is register and READY then proceed to Bursting
+5.	Select the bursting and create new bursting, choose the name and cloud account 
+6.	Provide infrastructure details AMI, Security Group ID and Subnet ID with cloud init script 
+7.	Click next and instance will be configured.
+8.	Finally, we will configure the PBS Pro on cloud, with cloud hook and bursting scenario 
+
