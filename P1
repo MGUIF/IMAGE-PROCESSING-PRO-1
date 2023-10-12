@@ -1,0 +1,226 @@
+#!/usr/bin/python3.8
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Jun 17 12:30:18 2023
+
+@author: test
+"""
+
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Apr 26 22:47:23 2023
+
+@author: test
+"""
+
+import cv2
+from PIL import Image
+import numpy as np
+from patchify import patchify
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from skimage.segmentation import slic
+from skimage.util import img_as_float
+from skimage.segmentation import mark_boundaries
+import matplotlib.pyplot as plt
+from numba import njit
+from numba.types import string
+
+
+def sample(m,n):
+    
+    
+    for z in range(1,m):
+        for a in range(1,n):
+            v=mask[z,a]
+            if v==255:
+                X.append(z)
+                Y.append(a)
+            #print(m,n)
+    return X,Y
+
+def sample1(P,Q,image):
+    B = np.zeros([m,n,3],'uint8')
+    R = np.zeros([m,n,3],'uint8')
+    G = np.zeros([m,n,3],'uint8')
+    for i in range(len(P)):
+        u=P[i]
+        t=Q[i]
+        r=H[u,t,0]
+        g=H[u,t,1]
+        b=H[u,t,2]
+        #print(r,g,b)
+        R[u,t,2]=b
+        G[u,t,1]=g
+        B[u,t,0]=r
+  
+    return R,G,B
+    
+scaler = MinMaxScaler()
+
+#H= cv2.imread('1.jpg', 1)
+H= cv2.imread('5.jpg', 1)
+
+#H= cv2.imread('thresholded.jpeg', 0)
+#thresholded.jpeg
+
+patch_size = 256
+
+image_dataset = []  
+
+image = cv2.imread('5.jpg', 1) #Read each image as BGR
+SIZE_X = (image.shape[1]//patch_size)*patch_size #Nearest size divisible by our patch size
+SIZE_Y = (image.shape[0]//patch_size)*patch_size #Nearest size divisible by our patch size
+image = Image.fromarray(image)
+image = image.crop((0 ,0, SIZE_X, SIZE_Y))  #Crop from top left corner
+#image = image.resize((SIZE_X, SIZE_Y))  #Try not to resize for semantic segmentation
+image = np.array(image) 
+
+#cv2.imshow("INTENSITY IMAGE",image)
+#cv2.waitKey(0)
+
+m,n,o=image.shape
+B = np.zeros([m,n,o],'uint8')
+
+B=image
+
+#cv2.imshow("INTENSITY IMAGE_1",B)
+#cv2.waitKey(0)
+
+
+segments = slic(img_as_float(image), compactness=10.0, n_segments = 100, sigma = 5)
+
+fig = plt.figure("Superpixels")
+ax = fig.add_subplot(1, 1, 1)
+ax.imshow(mark_boundaries(img_as_float(cv2.cvtColor(image, cv2.COLOR_BGR2RGB)), segments))
+plt.axis("off")
+plt.show()
+
+
+Y=[]
+
+X=[]
+
+Val=[]
+
+R=[]
+G=[]
+B=[]
+
+f=0
+Out = np.zeros([m,n,3],'uint8')
+Ret = np.zeros([m,n,3],'uint8')
+for (i, segVal) in enumerate(np.unique(segments)):
+    #print(segVal)
+    print("[x] inspecting segment %d" % (i))
+    mask = np.zeros(image.shape[:2], dtype = "uint8")
+    mask[segments == segVal]=255
+    #im2, contours, hierarchy = cv2.findContours(255,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+    #cv2.imshow("INTENSITY IMAGE_1",mask)
+    #cv2.waitKey(0)
+    #for index, val in enumerate(mask):
+    #    print(index, val)
+    #    print(val.shape)
+    #    s(index,val)
+    B = np.zeros([m,n,3],'uint8')
+    R = np.zeros([m,n,3],'uint8')
+    G = np.zeros([m,n,3],'uint8')
+    mask = np.array(mask) 
+    m,n = mask.shape
+    #print(m,n)
+    P,Q = sample(m,n)
+    count=0
+   
+    for v1,v2 in zip(P,Q):
+        #print(v1,v2)
+        #print(image[v1,v2])
+    
+        r=image[v1,v2,0]
+        g=image[v1,v2,1]
+        b=image[v1,v2,2]
+        #print(r,g,b)
+        R[v1,v2,2]=b
+        G[v1,v2,1]=g
+        B[v1,v2,0]=r
+        count +=1
+    #print(P)
+    #print(Q)
+    #C,D,E= sample1(P,Q,image)
+    #sample1(P,Q,image)
+    #cv2.imshow("INTENSITY IMAGE",R+G+B)
+    #cv2.waitKey(0)
+    t1=R.sum()
+    #print("count",count)
+    #print("Sum_Red",R.sum())
+    avg_r=t1/count
+    
+    t2=G.sum()
+    avg_g=t2/count
+    
+    t3=B.sum()
+    avg_b=t3/count
+    
+    #print("Avg R  G B",avg_r, avg_g, avg_b)
+    
+    """
+    if (avg_r >= 107 and avg_r <= 207) or (avg_g >= 83 and avg_g <= 193) or (avg_b >= 55 and avg_b <= 189) :
+        print("Seg::", segVal)
+                
+        
+        
+        #print("aaaaa",avg_r)
+        f+=1
+        #Ret=R+B+G
+        Ret[segments == segVal]=255
+        
+        #Ret[v1,v2,2]=255
+        #Ret[v1,v2,1]=255
+        #Ret[v1,v2,0]=255
+        
+        
+        #Ret[v1,v2,2]=255
+        #Ret[v1,v2,1]=255
+        #Ret[v1,v2,0]=255
+        
+        #cv2.imshow("INTENSITY IMAGE_11",Ret)
+        #cv2.waitKey(0)
+        
+    """
+    #cv2.imshow("INTENSITY IMAGE_1",Ret)
+    #cv2.waitKey(0)
+    #print("ggg",f)
+    Ret=R+B+G
+    m,n,o=Ret.shape
+    #print("R:",avg_r)
+    #print("G:",avg_g)
+    #print("B:",avg_b)
+    for u in range(0,m):
+        for t in range(0,n):
+            r=Ret[u,t,0]
+            g=Ret[u,t,1]
+            b=Ret[u,t,2]
+            
+            if (r>=128 and r<=255) and (g>117 and g<=234) and (b>106 and b<=212):
+                if(r>=140 and r<=255) and (g>103 and g<=188) and (b>88 and b<=159):
+                    Ret[u,t,0]=r
+                    Ret[u,t,1]=g
+                    Ret[u,t,2]=b
+                else:
+                    Ret[u,t,0]=255
+                    Ret[u,t,1]=255
+                    Ret[u,t,2]=255
+            else:
+                Ret[u,t,0]=r
+                Ret[u,t,1]=g
+                Ret[u,t,2]=b
+           
+    
+    
+    
+        
+cv2.imwrite('outimageintensity.jpg',Ret)
+#cv2.imshow("INTENSITY IMAGE_1",Ret)
+cv2.waitKey(0)
+#cv2.imshow("INTENSITY IMAGE",G)
+#cv2.waitKey(0)
+#cv2.imshow("INTENSITY IMAGE",B)
+#cv2.waitKey(0)
